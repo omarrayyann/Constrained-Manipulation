@@ -204,9 +204,15 @@ class Utils:
 
     # Transformation matrix to twist vector
     @staticmethod
-    def transformation_to_twist(transformation):
+    def transformation_to_twist(transformation,v_top=False):
         skew_twist = Utils.log_matrix(transformation)
         twist = Utils.from_skew_6d(skew_twist)
+        if v_top:
+            print("Before: ", twist)
+            temp = np.copy(twist[0:3,:])
+            twist[0:3,:] = twist[3:,:]
+            twist[3:,:]=temp
+            print("After: ", twist)
         return twist
 
     # Returns a homogeneous transformation given a twist [[w0],[w1],[w2],[v0],[v1],v[2]]
@@ -229,6 +235,7 @@ class Utils:
     # Takes the log of a 3x3 matrix like a rotation
     @staticmethod
     def log_matrix(matrix):
+        return scipy.linalg.logm(matrix)
         if np.array_equal(matrix,np.identity(3)):
             return np.array([1.0,0.0,0.0])
         if np.trace(matrix) == -1:

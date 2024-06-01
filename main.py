@@ -5,6 +5,7 @@ from environment import setup_pybullet_env
 import numpy as np
 from utils import Utils
 import proxsuite
+import pinocchio as pin
 
 END_EFF_FRAME_ID = 16
 
@@ -18,10 +19,15 @@ def forward_kinematics(pin_robot, q):
     return transformation
 
 # Computed Jacobian (in a frame oriented like the spatial frame but located at the end-effector)
-def get_jacobian(pin_robot, q):
+def get_velocity_jacobian(pin_robot, q):
     T_S_F = pin_robot.framePlacement(q, END_EFF_FRAME_ID)
     J = pin_robot.computeFrameJacobian(q, END_EFF_FRAME_ID)
     J = T_S_F.rotation @ J[:3,:]
+    return J
+
+# Computed Jacobian (in a frame oriented like the spatial frame but located at the end-effector)
+def get_body_jacobian(pin_robot, q):
+    J = pin_robot.computeFrameJacobian(q, END_EFF_FRAME_ID)
     return J
 
 # True EEF transformation
@@ -31,6 +37,25 @@ def current_eef(targid):
     transformation[0:3,3] = np.array(link_state[4])
     transformation[0:3,0:3] = Utils.quaternion_to_rot(link_state[5])
     return transformation
+
+def solve_dq(pin_robot, q, target, max_dq):
+
+    fk = forward_kinematics(pin_robot,q)
+    J = get_body_jacobian(pin_robot,q)
+    
+    twist_error = -Utils.transformation_to_twist(Utils.inverse_homogeneous_matrix(fk)@target,v_top=True)
+
+    H = J.T @ J
+    g = J.T @ twist_error
+
+    qp = proxsuite.proxqp.dense.QP(7, 0, 0, True)
+    lower_dq_limit = -np.ones(7)*max_dq
+    upper_dq_limit = +np.ones(7)*max_dq
+    qp.init(H, g, None, None, None, None, None, lower_dq_limit, upper_dq_limit)
+    qp.solve()
+    dq = qp.results.x
+
+    return dq, twist_error
 
 def main():
 
@@ -48,6 +73,13 @@ def main():
 
     target_position = np.array([0.5,0.23,0.94])
 
+    target_T = np.array([
+        [1.0,0.0,0.0,0.3],
+        [0.0,1.0,0.0,0.5],
+        [0.0,0.0,1.0,0.5],
+        [0.0,0.0,0.0,1.0],
+    ])
+
     try:
         for _ in range(10000): 
             
@@ -57,32 +89,10 @@ def main():
                 q[joint_index] = joint_info[0]
                 dq[joint_index] = joint_info[1]
 
-            # get the position of the end-effector
-            fk = forward_kinematics(pin_robot,q)
-            eef = current_eef(targid)
-            J = get_jacobian(pin_robot,q)
+            dq_new, error = solve_dq(pin_robot, q, target_T, 0.1)
 
-            print("FK:\n",fk)
-            print("EEF:\n",eef)
-
-            # print("End-Effector Speed: ", J@dq)
-            
-            error = fk[0:3,3] - target_position
-
-            H = J.T @ J
-            g = J.T @ error
-
-            qp = proxsuite.proxqp.dense.QP(7, 0, 0, True)
-            lower_dq_limit = -np.ones(7)*0.1
-            upper_dq_limit = +np.ones(7)*0.1
-            qp.init(H, g, None, None, None, None, None, lower_dq_limit, upper_dq_limit)
-            qp.solve()
-            dq = qp.results.x
-
-            joint_angles = q + 2*dq
-
+            joint_angles = q + 1.0*dq_new
             print("Error: ", np.sqrt(np.sum(error*error)))
-
 
             for joint_index in range(num_joints):
                 p.setJointMotorControl2(bodyUniqueId=targid,
@@ -91,7 +101,7 @@ def main():
                                         targetPosition=joint_angles[joint_index],
                                         force=500)
                 
-            time.sleep(1. / 240.)
+            time.sleep(1. / 1000.)
             p.stepSimulation()
 
 
