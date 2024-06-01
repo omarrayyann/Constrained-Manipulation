@@ -4,6 +4,7 @@ import pybullet as p
 from environment import setup_pybullet_env
 import numpy as np
 from utils import Utils
+import proxsuite
 
 END_EFF_FRAME_ID = 16
 
@@ -45,6 +46,7 @@ def main():
     p.configureDebugVisualizer(p.COV_ENABLE_DEPTH_BUFFER_PREVIEW, 1)
     p.configureDebugVisualizer(p.COV_ENABLE_SEGMENTATION_MARK_PREVIEW, 1)
 
+    target_position = np.array([0.5,0.23,0.94])
 
     try:
         for _ in range(10000): 
@@ -58,20 +60,35 @@ def main():
             # get the position of the end-effector
             fk = forward_kinematics(pin_robot,q)
             eef = current_eef(targid)
-            jacobian = get_jacobian(pin_robot,q)
+            J = get_jacobian(pin_robot,q)
 
             print("FK:\n",fk)
             print("EEF:\n",eef)
 
-            print("End-Effector Speed: ", jacobian@dq)
+            # print("End-Effector Speed: ", J@dq)
+            
+            error = fk[0:3,3] - target_position
 
-            target_positions = np.ones(num_joints)
+            H = J.T @ J
+            g = J.T @ error
+
+            qp = proxsuite.proxqp.dense.QP(7, 0, 0, True)
+            lower_dq_limit = -np.ones(7)*0.1
+            upper_dq_limit = +np.ones(7)*0.1
+            qp.init(H, g, None, None, None, None, None, lower_dq_limit, upper_dq_limit)
+            qp.solve()
+            dq = qp.results.x
+
+            joint_angles = q + 2*dq
+
+            print("Error: ", np.sqrt(np.sum(error*error)))
+
 
             for joint_index in range(num_joints):
                 p.setJointMotorControl2(bodyUniqueId=targid,
                                         jointIndex=joint_index,
                                         controlMode=p.POSITION_CONTROL,
-                                        targetPosition=target_positions[joint_index],
+                                        targetPosition=joint_angles[joint_index],
                                         force=500)
                 
             time.sleep(1. / 240.)
