@@ -14,6 +14,9 @@
       <geometry>
         <mesh filename="package://robot_properties_iiwa/meshes/iiwa14_base.stl" scale="0.001 0.001 0.001" />
       </geometry>
+      <material name="gray">
+        <color rgba="0.5 0.5 0.5 1"/>
+      </material>
     </visual>    
   </link>
 
@@ -38,6 +41,9 @@
       <geometry>
 	      <mesh filename="package://robot_properties_iiwa/meshes/iiwa14_link1.stl" scale="0.001 0.001 0.001" />
       </geometry>
+      <material name="orange">
+        <color rgba="1 0.5 0 1"/>
+      </material>
     </visual>
   </link>  
 
@@ -62,6 +68,9 @@
       <geometry>
 	      <mesh filename="package://robot_properties_iiwa/meshes/iiwa14_link2.stl" scale="0.001 0.001 0.001" />
       </geometry>
+      <material name="orange">
+        <color rgba="1 0.5 0 1"/>
+      </material>
     </visual>
   </link>
 
@@ -86,6 +95,9 @@
       <geometry>
 	      <mesh filename="package://robot_properties_iiwa/meshes/iiwa14_link3.stl" scale="0.001 0.001 0.001" />
       </geometry>
+      <material name="orange">
+        <color rgba="1 0.5 0 1"/>
+      </material>
     </visual>  
   </link>
 
@@ -110,6 +122,9 @@
       <geometry>
 	      <mesh filename="package://robot_properties_iiwa/meshes/iiwa14_link4.stl" scale="0.001 0.001 0.001" />
       </geometry>
+      <material name="orange">
+        <color rgba="1 0.5 0 1"/>
+      </material>
     </visual>
   </link>
 
@@ -134,6 +149,9 @@
       <geometry>
 	      <mesh filename="package://robot_properties_iiwa/meshes/iiwa14_link5.stl" scale="0.001 0.001 0.001" />
       </geometry>
+       <material name="orange">
+        <color rgba="1 0.5 0 1"/>
+      </material>
     </visual>
   </link>
 
@@ -158,6 +176,9 @@
       <geometry>
 	      <mesh filename="package://robot_properties_iiwa/meshes/iiwa14_link6.stl" scale="0.001 0.001 0.001" />
       </geometry>
+       <material name="orange">
+        <color rgba="1 0.5 0 1"/>
+      </material>
     </visual>
   </link>
 
@@ -183,8 +204,11 @@
       <geometry>
 	      <mesh filename="package://robot_properties_iiwa/meshes/iiwa14_link7.stl" scale="0.001 0.001 0.001" />
       </geometry>
+      <material name="gray">
+        <color rgba="0.5 0.5 0.5 1"/>
+      </material>
     </visual>
+     
   </link>
-
 
 </robot>

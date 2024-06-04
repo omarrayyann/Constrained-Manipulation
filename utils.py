@@ -208,11 +208,9 @@ class Utils:
         skew_twist = Utils.log_matrix(transformation)
         twist = Utils.from_skew_6d(skew_twist)
         if v_top:
-            print("Before: ", twist)
             temp = np.copy(twist[0:3,:])
             twist[0:3,:] = twist[3:,:]
             twist[3:,:]=temp
-            print("After: ", twist)
         return twist
 
     # Returns a homogeneous transformation given a twist [[w0],[w1],[w2],[v0],[v1],v[2]]
